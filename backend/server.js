@@ -7,7 +7,7 @@ import rateLimit from "express-rate-limit";
 // Load environment variables from the .env file
 dotenv.config();
 
-const API_KEYS = process.env.API_KEYS.split(",");
+const API_KEYS = process.env.API_KEYS;
 const PORT = process.env.PORT || 3000;
 
 // Create an instance of the Express application
@@ -42,7 +42,7 @@ app.use(limiter);
 
 const apiKeyMiddleware = (req,res, next) => {
     const apiKey = req.headers["x-api-key"];
-    if(!apiKey || API_KEYS.includes(apiKey)) {
+    if (!apiKey || !API_KEYS.includes(apiKey)) {
         return res.status(403).json({ error: "Forbidden: Invalid API Key" });
     }
     next();
@@ -78,10 +78,22 @@ app.get("/session", async (req, res) => {
     }
 });
 
-app.use("/get-api-key", apiKeyMiddleware);
+app.get("/getEKey", async (req, res) => {
+    try {
+        // Fetch OpenAI ephemeral key from the backend
+        const tokenResponse = await fetch("https://openaibackend-production.up.railway.app/session", {
+        headers: { "x-api-key": API_KEYS }
+        })
 
-app.get("/get-api-key", (req, res) => {
-    res.json({ apiKey: process.env.API_KEYS.split(",")[0] });
+        const data = await tokenResponse.json();
+        const EPHEMERAL_KEY = data.client_secret.value;
+
+        res.json({ ephemeralKey: EPHEMERAL_KEY });
+        
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).send({ error: error.message || "Error !!" });
+    }
 });
 
 
