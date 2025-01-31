@@ -15,10 +15,22 @@ const app = express();
 
 // Step 1: Apply CORS middleware globally
 // This allows specific origins to access the server resources
-// app.use(cors({
-//     origin: ["http://127.0.0.1:5500", "http://localhost:3001"], // Allow both these origins
-// }));
-app.use(cors({ origin: "*", }));
+const allowedOrigins =
+    process.env.RAILWAY_ENVIRONMENT_NAME === "production"
+        ? ["https://ai-voice-agent-v0-1.vercel.app"]
+        : ["http://localhost:3001", "http://localhost:3000"];
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error("Not allowed!"));
+            }
+        }
+    })
+);
 
 const limiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
@@ -53,17 +65,23 @@ app.get("/session", async (req, res) => {
                 voice: "ballad",
             }),
         });
-
+        
         if (!r.ok) {
             throw new Error(`OpenAI API Error: ${r.status} ${r.statusText}`);
         }
-
+        
         const data = await r.json();
         res.send(data);
     } catch (error) {
         console.error("Error creating session:", error);
         res.status(500).send({ error: error.message || "Failed to create session" });
     }
+});
+
+app.use("/get-api-key", apiKeyMiddleware);
+
+app.get("/get-api-key", (req, res) => {
+    res.json({ apiKey: process.env.API_KEYS.split(",")[0] });
 });
 
 
