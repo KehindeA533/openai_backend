@@ -8,7 +8,7 @@ import rateLimit from "express-rate-limit";
 dotenv.config();
 
 const API_KEYS = process.env.API_KEYS;
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Create an instance of the Express application
 const app = express();
