@@ -21,9 +21,8 @@ const API_KEYS = process.env.API_KEYS;
 
 // Set the port on which the server will listen. Use the PORT environment variable if available, otherwise default to 3001.
 const LOCAL_HOST_PORT = process.env.LOCAL_HOST_PORT;
-const PROD_PORT = process.env.PORT || LOCAL_HOST_PORT;
+const PORT = process.env.PORT || LOCAL_HOST_PORT;
 
-const PORT = RAILWAY_ENVIRONMENT_NAME === "production" ? PROD_PORT : LOCAL_HOST_PORT;
 
 // Create an instance of the Express application.
 const app = express();
