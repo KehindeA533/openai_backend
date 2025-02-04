@@ -23,7 +23,7 @@ const API_KEYS = process.env.API_KEYS;
 const LOCAL_HOST_PORT = process.env.LOCAL_HOST_PORT;
 const PROD_PORT = process.env.PORT || LOCAL_HOST_PORT;
 
-const PORT = railway_env === "production" ? PROD_PORT : LOCAL_HOST_PORT;
+const PORT = RAILWAY_ENVIRONMENT_NAME === "production" ? PROD_PORT : LOCAL_HOST_PORT;
 
 // Create an instance of the Express application.
 const app = express();
