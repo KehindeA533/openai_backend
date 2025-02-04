@@ -34,25 +34,29 @@ const app = express();
 // Determine which origins are allowed to access the server.
 // If the app is running in a production environment, only allow the production domain.
 // Otherwise, allow localhost origins for development.
-const allowedOrigins =
-    process.env.RAILWAY_ENVIRONMENT_NAME === "production"
-        ? ["https://ai-voice-agent-v0-1.vercel.app"]  // Production domain
-        : [ `http://localhost:${LOCAL_HOST_PORT}`];  // Development domains
+// const allowedOrigins =
+//     process.env.RAILWAY_ENVIRONMENT_NAME === "production"
+//         ? ["https://ai-voice-agent-v0-1.vercel.app"]  // Production domain
+//         : [ `http://localhost:${LOCAL_HOST_PORT}`];  // Development domains
 
-// Apply CORS middleware globally with a custom origin checking function.
-app.use(
-    cors({
-        origin: (origin, callback) => {
-            // If the request has no origin (e.g., a same-origin request) or if the origin is in the allowed list, allow the request.
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                // If the origin is not allowed, return an error.
-                callback(new Error("Not allowed!"));
-            }
-        }
-    })
-);
+// // Apply CORS middleware globally with a custom origin checking function.
+// app.use(
+//     cors({
+//         origin: (origin, callback) => {
+//             // If the request has no origin (e.g., a same-origin request) or if the origin is in the allowed list, allow the request.
+//             if (!origin || allowedOrigins.includes(origin)) {
+//                 callback(null, true);
+//             } else {
+//                 // If the origin is not allowed, return an error.
+//                 callback(new Error("Not allowed!"));
+//             }
+//         }
+//     })
+// );
+
+app.use(cors({
+    origin: "*",
+}));
 
 // Set up rate limiting to restrict clients to a maximum of 5 requests per minute per IP.
 // This helps prevent abuse or accidental overload of the server.
