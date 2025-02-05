@@ -21,6 +21,7 @@ const API_KEYS = process.env.API_KEYS;
 
 // Set the port on which the server will listen. Use the PORT environment variable if available, otherwise default to 3001.
 const LOCAL_HOST_PORT = process.env.LOCAL_HOST_PORT;
+const F_LOCAL_HOST_PORT = process.env.F_LOCAL_HOST_PORT;
 const PORT = process.env.PORT || LOCAL_HOST_PORT;
 
 // Create an instance of the Express application.
@@ -36,7 +37,7 @@ const app = express();
 const allowedOrigins =
     process.env.RAILWAY_ENVIRONMENT_NAME === "production"
         ? ["https://ai-voice-agent-v0-1.vercel.app"]  // Production domain
-        : [ `http://localhost:${LOCAL_HOST_PORT}`];  // Development domains
+        : [ `http://localhost:${F_LOCAL_HOST_PORT}`];  // Development domains
 
 // Apply CORS middleware globally with a custom origin checking function.
 app.use(
