@@ -1,5 +1,8 @@
 // Import required modules for the application
 
+// Import the agentPrompt from the helper functions module. This prompt is later used for the AI's initial response.
+import { agentPrompt } from "./helper_func.js";
+
 // Express is a popular web framework for building APIs and web servers.
 import express from "express";
 
@@ -101,7 +104,9 @@ app.get("/session", async (req, res) => {
             // Send the required parameters for session creation (model and voice) in the request body.
             body: JSON.stringify({
                 model: "gpt-4o-realtime-preview", // The model to be used for the session
-                voice: "ballad", // The voice configuration for the session
+                voice: "ash", // The voice configuration for the session
+                // Include the agent prompt that was imported earlier.
+                instructions: agentPrompt
             }),
         });
         
@@ -130,6 +135,10 @@ app.get("/getEKey", async (req, res) => {
         const tokenResponse = await fetch("https://openaibackend-production.up.railway.app/session", {
             headers: { "x-api-key": API_KEYS }
         });
+        
+        // const tokenResponse = await fetch("http://localhost:3000/session", {
+        //     headers: { "x-api-key": API_KEYS }
+        // }); // DEV
 
         // Parse the JSON response from the external service.
         const data = await tokenResponse.json();
