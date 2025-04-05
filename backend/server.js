@@ -103,7 +103,7 @@ app.get("/session", async (req, res) => {
             },
             // Send the required parameters for session creation (model and voice) in the request body.
             body: JSON.stringify({
-                model: "gpt-4o-realtime-preview", // The model to be used for the session
+                model: "gpt-4o-realtime-preview-2024-12-17", // The model to be used for the session
                 voice: "ash", // The voice configuration for the session
                 // Include the agent prompt that was imported earlier.
                 instructions: agentPrompt
