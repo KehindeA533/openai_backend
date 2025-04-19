@@ -13,3 +13,5 @@ README.md
 # Google Calendar API credentials
 credentials.json
 token.json
+backend/credentials.json
+backend/token.json
