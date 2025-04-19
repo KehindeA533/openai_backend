@@ -15,6 +15,12 @@ import cors from "cors";
 // express-rate-limit is used to limit repeated requests to public APIs and endpoints.
 import rateLimit from "express-rate-limit";
 
+// axios is used for making HTTP requests
+import axios from "axios";
+
+// Import Google Calendar router
+import calendarRouter from "./googleCalendar.js";
+
 // Load environment variables from the .env file into process.env.
 dotenv.config();
 
@@ -69,6 +75,9 @@ const limiter = rateLimit({
 // Apply the rate limiting middleware to all incoming requests.
 app.use(limiter);
 
+// Parse JSON request bodies
+app.use(express.json());
+
 // Define middleware to validate the API key provided in request headers.
 const apiKeyMiddleware = (req, res, next) => {
     // Extract the API key from the custom header 'x-api-key'.
@@ -85,6 +94,12 @@ const apiKeyMiddleware = (req, res, next) => {
 // Apply the API key middleware to any route that starts with "/session".
 // This ensures that any requests to these endpoints require a valid API key.
 app.use("/session", apiKeyMiddleware);
+
+// Apply the API key middleware to calendar routes
+app.use("/calendar", apiKeyMiddleware);
+
+// Register the calendar router
+app.use("/calendar", calendarRouter);
 
 // ============================================================================
 // STEP 2: Define Routes
@@ -153,6 +168,56 @@ app.get("/getEKey", async (req, res) => {
         console.error("Error:", error);
         // Send a 500 error response if something goes wrong.
         res.status(500).send({ error: error.message || "Error !!" });
+    }
+});
+
+app.get("/getWeatherForecast", async (req, res) => {
+    try {
+        // Constants for API key and Base URL
+        const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
+        const BASE_URL = 'http://api.weatherapi.com/v1';
+        
+        // Get zipCode from query parameters
+        const { zipCode } = req.query;
+        
+        // Parameter validation: Ensure the zipCode is provided and is a non-empty string.
+        if (typeof zipCode !== 'string' || zipCode.trim() === '') {
+            return res.status(400).json({ error: 'A valid zip code string is required.' });
+        }
+        
+        // Construct the endpoint URL.
+        const endpoint = `${BASE_URL}/forecast.json`;
+        
+        // Make the API request using axios.
+        const response = await axios.get(endpoint, {
+            params: {
+                key: WEATHER_API_KEY,
+                q: zipCode,
+                days: 1,
+                aqi: 'no',
+                alerts: 'no'
+            },
+        });
+        
+        // Extract and return the weather data
+        const weatherData = response.data;
+        res.json(weatherData);
+        
+    } catch (error) {
+        // Log any errors that occur during the fetch.
+        console.error("Error:", error);
+        
+        // Provide more detailed error messages based on the error type
+        if (error.response) {
+            res.status(error.response.status).send({ 
+                error: `Weather API error: ${error.response.data?.error?.message || error.response.statusText}` 
+            });
+        } else if (error.request) {
+            res.status(500).send({ error: `No response received from Weather API: ${error.message}` });
+        } else {
+            // Send a 500 error response if something goes wrong.
+            res.status(500).send({ error: error.message || "Error !!" });
+        }
     }
 });
 
