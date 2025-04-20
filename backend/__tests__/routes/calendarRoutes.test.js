@@ -39,7 +39,7 @@ describe('Calendar Routes', () => {
     calendarController.updateEvent.mockImplementation((req, res) => {
       res.json({ 
         event: { 
-          id: req.params.eventId,
+          id: 'event-123', // Use a fixed eventId for testing
           summary: `Updated reservation at ${req.body.restaurantName || 'Restaurant'}`,
           location: req.body.restaurantAddress || 'Address',
           attendees: [{ email: req.body.email || 'email@example.com' }]
@@ -50,7 +50,7 @@ describe('Calendar Routes', () => {
     calendarController.deleteEvent.mockImplementation((req, res) => {
       res.json({ 
         success: true, 
-        eventId: req.params.eventId 
+        eventId: 'event-123' // Use a fixed eventId for testing
       });
     });
     
@@ -86,39 +86,39 @@ describe('Calendar Routes', () => {
     });
   });
 
-  describe('PUT /calendar/events/:eventId', () => {
+  describe('PUT /calendar/events/:name', () => {
     it('should update an existing calendar event', async () => {
-      const eventId = 'event-123';
+      const name = 'John Doe';
       const updateData = {
         restaurantName: 'Updated Restaurant',
         partySize: 6
       };
 
       const response = await request(app)
-        .put(`/calendar/events/${eventId}`)
+        .put(`/calendar/events/${encodeURIComponent(name)}`)
         .send(updateData);
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('event');
-      expect(response.body.event).toHaveProperty('id', eventId);
+      expect(response.body.event).toHaveProperty('id', 'event-123');
       expect(response.body.event.summary).toContain(updateData.restaurantName);
       expect(calendarController.updateEvent).toHaveBeenCalledTimes(1);
-      expect(calendarController.updateEvent.mock.calls[0][0].params.eventId).toBe(eventId);
+      expect(calendarController.updateEvent.mock.calls[0][0].params.name).toBe(name);
     });
   });
 
-  describe('DELETE /calendar/events/:eventId', () => {
+  describe('DELETE /calendar/events/:name', () => {
     it('should delete a calendar event', async () => {
-      const eventId = 'event-123';
+      const name = 'John Doe';
 
       const response = await request(app)
-        .delete(`/calendar/events/${eventId}`);
+        .delete(`/calendar/events/${encodeURIComponent(name)}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
-      expect(response.body).toHaveProperty('eventId', eventId);
+      expect(response.body).toHaveProperty('eventId', 'event-123');
       expect(calendarController.deleteEvent).toHaveBeenCalledTimes(1);
-      expect(calendarController.deleteEvent.mock.calls[0][0].params.eventId).toBe(eventId);
+      expect(calendarController.deleteEvent.mock.calls[0][0].params.name).toBe(name);
     });
   });
 
@@ -164,7 +164,7 @@ describe('Calendar Routes', () => {
       });
 
       const response = await request(app)
-        .put('/calendar/events/nonexistent-id')
+        .put('/calendar/events/nonexistent-name')
         .send({});
 
       expect(response.status).toBe(404);
@@ -180,7 +180,7 @@ describe('Calendar Routes', () => {
       });
 
       const response = await request(app)
-        .delete('/calendar/events/event-123');
+        .delete('/calendar/events/John%20Doe');
 
       expect(response.status).toBe(403);
       expect(response.body).toHaveProperty('error', 'Unauthorized to delete this event');

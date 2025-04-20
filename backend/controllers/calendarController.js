@@ -69,20 +69,22 @@ export async function createEvent(req, res, next) {
  */
 export async function updateEvent(req, res, next) {
   try {
-    const { eventId } = req.params;
+    const { name } = req.params;
     const { ...updates } = req.body;
 
     // Validate required fields
     validateEventFields(
-      { eventId }, 
-      ['eventId']
+      { name }, 
+      ['name']
     );
 
-    // Get existing event data
-    const eventData = eventStore.getEvent(eventId);
+    // Get existing event data using name
+    const eventData = eventStore.getEventByName(name);
     if (!eventData) {
       throw new ApiError('Event not found', 404);
     }
+    
+    const eventId = eventData.eventId;
     
     // Update the event
     const updatedEvent = await updateCalendarEvent(
@@ -96,11 +98,20 @@ export async function updateEvent(req, res, next) {
       updates.name || eventData.name
     );
     
-    // Update the stored event data
-    eventStore.saveEvent(eventId, {
-      ...eventData,
-      ...updates
-    });
+    // If name is updated, update the name mapping
+    if (updates.name && updates.name !== name) {
+      // Save with new name, which will update the nameToEventId mapping
+      eventStore.saveEvent(eventId, {
+        ...eventData,
+        ...updates
+      });
+    } else {
+      // Update the stored event data without changing name mapping
+      eventStore.saveEvent(eventId, {
+        ...eventData,
+        ...updates
+      });
+    }
     
     logger.info('Calendar event updated successfully', { eventId });
     return res.status(200).json(updatedEvent);
@@ -115,25 +126,27 @@ export async function updateEvent(req, res, next) {
  */
 export async function deleteEvent(req, res, next) {
   try {
-    const { eventId } = req.params;
+    const { name } = req.params;
 
     // Validate required fields
     validateEventFields(
-      { eventId }, 
-      ['eventId']
+      { name }, 
+      ['name']
     );
 
     // Get existing event data
-    const eventData = eventStore.getEvent(eventId);
+    const eventData = eventStore.getEventByName(name);
     if (!eventData) {
       throw new ApiError('Event not found', 404);
     }
+    
+    const eventId = eventData.eventId;
     
     // Delete the event from Google Calendar
     const result = await deleteCalendarEvent(eventId);
     
     // Remove the event from our store
-    eventStore.removeEvent(eventId);
+    eventStore.removeEventByName(name);
     
     logger.info('Calendar event deleted successfully', { eventId });
     return res.status(200).json(result);

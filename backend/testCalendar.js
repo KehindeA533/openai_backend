@@ -23,6 +23,9 @@ async function testCalendarEndpoints() {
     
     logger.info('Testing Calendar API Endpoints...');
     
+    // Create a unique test user name using timestamp to avoid conflicts
+    const testUserName = `Test User ${Date.now()}`;
+    
     // 1. Create a calendar event
     logger.info('1. Testing CREATE event endpoint:');
     const createResponse = await fetch(`${BASE_URL}/calendar/events`, {
@@ -38,7 +41,7 @@ async function testCalendarEndpoints() {
         email: 'test@example.com',
         restaurantName: 'Test Restaurant',
         restaurantAddress: '123 Test Street, Anytown, USA',
-        name: 'Test User'
+        name: testUserName
       })
     });
     
@@ -50,11 +53,12 @@ async function testCalendarEndpoints() {
       logger.info('Successfully created event');
       logger.info(`Event ID: ${createResult.id}`);
       
+      // Store eventId for verification purposes
       const eventId = createResult.id;
       
-      // 2. Update the calendar event
+      // 2. Update the calendar event using name instead of eventId
       logger.info('2. Testing UPDATE event endpoint:');
-      const updateResponse = await fetch(`${BASE_URL}/calendar/events/${eventId}`, {
+      const updateResponse = await fetch(`${BASE_URL}/calendar/events/${encodeURIComponent(testUserName)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -90,9 +94,9 @@ async function testCalendarEndpoints() {
         if (getEventsResponse.ok) {
           logger.info(`Found ${getEventsResult.length} events`);
           
-          // 4. Delete the calendar event
+          // 4. Delete the calendar event using name instead of eventId
           logger.info('4. Testing DELETE event endpoint:');
-          const deleteResponse = await fetch(`${BASE_URL}/calendar/events/${eventId}`, {
+          const deleteResponse = await fetch(`${BASE_URL}/calendar/events/${encodeURIComponent(testUserName)}`, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
