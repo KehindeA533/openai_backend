@@ -61,21 +61,16 @@ app.use((req, res, next) => {
 // STEP 2: Define Routes
 // ============================================================================
 
-// OpenAI routes (already have API key middleware applied in the router)
-app.use('/session', openaiRoutes);
-app.use('/getEKey', openaiRoutes);
+// Mount all OpenAI routes
+// This will make routes available at /session and /getEKey directly
+app.use('/', openaiRoutes);
 
 // Calendar routes
-app.use('/calendar', apiKeyMiddleware, calendarRoutes);
+app.use('/calendar', calendarRoutes);
 
 // Weather routes
-app.use('/weather', apiKeyMiddleware, weatherRoutes);
+app.use('/weather', weatherRoutes);
 
-// Legacy route for weather forecast (for backward compatibility)
-app.get('/getWeatherForecast', apiKeyMiddleware, (req, res, next) => {
-  req.url = '/forecast';
-  app.handle(req, res, next);
-});
 
 // Handle 404 errors
 app.use((req, res) => {

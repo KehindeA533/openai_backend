@@ -14,7 +14,6 @@ async function testCalendarEndpoints() {
   try {
     // Use the configured port or default to 3000
     const BASE_URL = `http://localhost:${config.port}`;
-    const userId = 'test_user_' + Date.now(); // Generate unique user ID for testing
     const API_KEY = config.apiKeys[0]; // Get the first API key from config
     
     if (!API_KEY) {
@@ -33,7 +32,6 @@ async function testCalendarEndpoints() {
         'x-api-key': API_KEY,
       },
       body: JSON.stringify({
-        userId,
         date: '2025-06-01',
         time: '19:00',
         partySize: 4,
@@ -63,7 +61,6 @@ async function testCalendarEndpoints() {
           'x-api-key': API_KEY,
         },
         body: JSON.stringify({
-          userId,
           date: '2025-06-02', // Changed date
           partySize: 6,       // Changed party size
         })
@@ -76,9 +73,9 @@ async function testCalendarEndpoints() {
       if (updateResponse.ok) {
         logger.info('Successfully updated event');
         
-        // 3. Get user events
-        logger.info('3. Testing GET user events endpoint:');
-        const getEventsResponse = await fetch(`${BASE_URL}/calendar/users/${userId}/events`, {
+        // 3. Get all events
+        logger.info('3. Testing GET all events endpoint:');
+        const getEventsResponse = await fetch(`${BASE_URL}/calendar/events`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -91,7 +88,7 @@ async function testCalendarEndpoints() {
         logger.info(`Response status: ${getEventsResponse.status}`);
         
         if (getEventsResponse.ok) {
-          logger.info(`Found ${getEventsResult.length} events for user`);
+          logger.info(`Found ${getEventsResult.length} events`);
           
           // 4. Delete the calendar event
           logger.info('4. Testing DELETE event endpoint:');
@@ -100,10 +97,7 @@ async function testCalendarEndpoints() {
             headers: {
               'Content-Type': 'application/json',
               'x-api-key': API_KEY,
-            },
-            body: JSON.stringify({
-              userId,
-            })
+            }
           });
           
           // Parse response
@@ -116,7 +110,7 @@ async function testCalendarEndpoints() {
             logger.error('Failed to delete event:', deleteResult.error);
           }
         } else {
-          logger.error('Failed to get user events:', getEventsResult.error);
+          logger.error('Failed to get events:', getEventsResult.error);
         }
       } else {
         logger.error('Failed to update event:', updateResult.error);

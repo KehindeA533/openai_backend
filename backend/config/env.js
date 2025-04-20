@@ -37,7 +37,7 @@ const config = {
   environment: process.env.NODE_ENV || 'development',
   
   // API configurations
-  apiKeys: process.env.API_KEYS ? process.env.API_KEYS.split(',') : [],
+  apiKeys: process.env.API_KEYS,
   openAIKey: process.env.OPENAI_API_KEY,
   weatherApiKey: process.env.WEATHER_API_KEY,
   

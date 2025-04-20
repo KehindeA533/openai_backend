@@ -162,7 +162,7 @@ describe('OpenAI Controller', () => {
       expect(global.fetch).toHaveBeenCalledWith(
         'http://localhost:3000/session',
         expect.objectContaining({
-          headers: { 'x-api-key': 'mock-api-key' }
+          headers: { 'x-api-key': ['mock-api-key'] }
         })
       );
       expect(res.json).toHaveBeenCalledWith({ ephemeralKey: 'mock-ephemeral-key' });
@@ -190,7 +190,9 @@ describe('OpenAI Controller', () => {
       // Assert
       expect(global.fetch).toHaveBeenCalledWith(
         'https://openaibackend-production.up.railway.app/session',
-        expect.anything()
+        expect.objectContaining({
+          headers: { 'x-api-key': ['mock-api-key'] }
+        })
       );
       
       // Reset config environment

@@ -4,14 +4,9 @@
  */
 import express from 'express';
 import { getWeatherForecast } from '../controllers/weatherController.js';
-import apiKeyMiddleware from '../middleware/apiKey.js';
 
 const router = express.Router();
 
-/**
- * Apply API key middleware to all weather routes
- */
-router.use(apiKeyMiddleware);
 
 /**
  * @api {get} /weather/forecast Get weather forecast

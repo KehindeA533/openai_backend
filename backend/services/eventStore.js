@@ -14,72 +14,50 @@ class EventStore {
 
   /**
    * Save an event to the store
-   * @param {string} userId - User identifier
    * @param {string} eventId - Google Calendar event ID
    * @param {Object} eventData - Event details
    */
-  saveEvent(userId, eventId, eventData = {}) {
-    if (!userId || !eventId) {
-      throw new Error('userId and eventId are required');
+  saveEvent(eventId, eventData = {}) {
+    if (!eventId) {
+      throw new Error('eventId is required');
     }
     
-    const key = this._generateKey(userId, eventId);
-    this.events.set(key, { eventId, ...eventData });
+    this.events.set(eventId, { eventId, ...eventData });
     return true;
   }
 
   /**
    * Get an event from the store
-   * @param {string} userId - User identifier
    * @param {string} eventId - Google Calendar event ID
    * @returns {Object|null} Event details or null if not found
    */
-  getEvent(userId, eventId) {
-    if (!userId || !eventId) {
+  getEvent(eventId) {
+    if (!eventId) {
       return null;
     }
     
-    const key = this._generateKey(userId, eventId);
-    return this.events.get(key) || null;
+    return this.events.get(eventId) || null;
   }
 
   /**
-   * Get all events for a user
-   * @param {string} userId - User identifier
+   * Get all events
    * @returns {Array} Array of event objects
    */
-  getAllUserEvents(userId) {
-    if (!userId) {
-      return [];
-    }
-    
-    const prefix = `${userId}_`;
-    return Array.from(this.events.entries())
-      .filter(([key]) => key.startsWith(prefix))
-      .map(([, value]) => value);
+  getAllEvents() {
+    return Array.from(this.events.values());
   }
 
   /**
    * Remove an event from the store
-   * @param {string} userId - User identifier
    * @param {string} eventId - Google Calendar event ID
    * @returns {boolean} Success indicator
    */
-  removeEvent(userId, eventId) {
-    if (!userId || !eventId) {
+  removeEvent(eventId) {
+    if (!eventId) {
       return false;
     }
     
-    const key = this._generateKey(userId, eventId);
-    return this.events.delete(key);
-  }
-
-  /**
-   * Generate a composite key for the events map
-   * @private
-   */
-  _generateKey(userId, eventId) {
-    return `${userId}_${eventId}`;
+    return this.events.delete(eventId);
   }
 }
 

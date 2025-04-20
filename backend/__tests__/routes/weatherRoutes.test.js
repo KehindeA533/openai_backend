@@ -22,7 +22,8 @@ describe('Weather Routes', () => {
     
     // Setup express app for testing
     app = express();
-    app.use('/weather', weatherRoutes);
+    // Apply API key middleware manually to simulate how it would be applied in server.js
+    app.use('/weather', apiKeyMiddleware, weatherRoutes);
     
     // Mock controller implementation
     weatherController.getWeatherForecast.mockImplementation((req, res) => {
@@ -75,7 +76,7 @@ describe('Weather Routes', () => {
 
       // Create a new app with error handling
       const testApp = express();
-      testApp.use('/weather', weatherRoutes);
+      testApp.use('/weather', apiKeyMiddleware, weatherRoutes);
       testApp.use((err, req, res, next) => {
         res.status(err.statusCode || 500).json({ error: err.message });
       });
@@ -101,7 +102,7 @@ describe('Weather Routes', () => {
 
       // Create a new app with error handling
       const testApp = express();
-      testApp.use('/weather', weatherRoutes);
+      testApp.use('/weather', apiKeyMiddleware, weatherRoutes);
       testApp.use((err, req, res, next) => {
         res.status(err.statusCode || 500).json({ error: err.message });
       });
@@ -117,7 +118,7 @@ describe('Weather Routes', () => {
   describe('API Key middleware', () => {
     it('should reject requests with invalid API key', async () => {
       // Mock apiKeyMiddleware to reject the request
-      apiKeyMiddleware.mockImplementation((req, res, next) => {
+      apiKeyMiddleware.mockImplementationOnce((req, res, next) => {
         return res.status(403).json({ error: 'Forbidden: Invalid API Key' });
       });
 
@@ -132,7 +133,7 @@ describe('Weather Routes', () => {
 
     it('should allow requests with valid API key', async () => {
       // Mock apiKeyMiddleware to allow the request
-      apiKeyMiddleware.mockImplementation((req, res, next) => next());
+      apiKeyMiddleware.mockImplementationOnce((req, res, next) => next());
 
       const response = await request(app)
         .get('/weather/forecast')

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createEvent, updateEvent, deleteEvent, getUserEvents } from '../../controllers/calendarController.js';
+import { createEvent, updateEvent, deleteEvent, getAllEvents } from '../../controllers/calendarController.js';
 import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '../../services/calendarService.js';
 import eventStore from '../../services/eventStore.js';
 import { ApiError } from '../../middleware/errorHandler.js';
@@ -17,7 +17,7 @@ vi.mock('../../services/eventStore.js', () => ({
     saveEvent: vi.fn(),
     getEvent: vi.fn(),
     removeEvent: vi.fn(),
-    getAllUserEvents: vi.fn()
+    getAllEvents: vi.fn()
   }
 }));
 
@@ -58,7 +58,6 @@ describe('Calendar Controller', () => {
 
   describe('createEvent', () => {
     const validEventData = {
-      userId: 'user123',
       date: '2023-12-25',
       time: '18:00',
       partySize: 4,
@@ -88,7 +87,6 @@ describe('Calendar Controller', () => {
         validEventData.name
       );
       expect(eventStore.saveEvent).toHaveBeenCalledWith(
-        validEventData.userId,
         mockEventId,
         expect.objectContaining({
           date: validEventData.date,
@@ -152,7 +150,6 @@ describe('Calendar Controller', () => {
   });
 
   describe('updateEvent', () => {
-    const userId = 'user123';
     const eventId = 'event123';
     const existingEvent = {
       date: '2023-12-25',
@@ -171,7 +168,7 @@ describe('Calendar Controller', () => {
     it('should update a calendar event successfully', async () => {
       // Arrange
       req.params = { eventId };
-      req.body = { userId, ...updates };
+      req.body = { ...updates };
       eventStore.getEvent.mockReturnValue(existingEvent);
       updateCalendarEvent.mockResolvedValue({ id: eventId, ...existingEvent, ...updates });
 
@@ -179,7 +176,7 @@ describe('Calendar Controller', () => {
       await updateEvent(req, res, next);
 
       // Assert
-      expect(eventStore.getEvent).toHaveBeenCalledWith(userId, eventId);
+      expect(eventStore.getEvent).toHaveBeenCalledWith(eventId);
       expect(updateCalendarEvent).toHaveBeenCalledWith(
         eventId,
         existingEvent.date,
@@ -191,7 +188,6 @@ describe('Calendar Controller', () => {
         existingEvent.name
       );
       expect(eventStore.saveEvent).toHaveBeenCalledWith(
-        userId,
         eventId,
         expect.objectContaining({
           ...existingEvent,
@@ -206,14 +202,14 @@ describe('Calendar Controller', () => {
     it('should return 404 when event does not exist', async () => {
       // Arrange
       req.params = { eventId };
-      req.body = { userId, ...updates };
+      req.body = { ...updates };
       eventStore.getEvent.mockReturnValue(null);
 
       // Act
       await updateEvent(req, res, next);
 
       // Assert
-      expect(eventStore.getEvent).toHaveBeenCalledWith(userId, eventId);
+      expect(eventStore.getEvent).toHaveBeenCalledWith(eventId);
       expect(updateCalendarEvent).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.objectContaining({
         statusCode: 404,
@@ -224,8 +220,8 @@ describe('Calendar Controller', () => {
 
     it('should return 400 when required fields are missing', async () => {
       // Arrange
-      req.params = { eventId };
-      req.body = { ...updates }; // Missing userId
+      req.params = {}; // Missing eventId
+      req.body = { ...updates };
 
       // Act
       await updateEvent(req, res, next);
@@ -239,7 +235,7 @@ describe('Calendar Controller', () => {
     it('should handle service exceptions properly', async () => {
       // Arrange
       req.params = { eventId };
-      req.body = { userId, ...updates };
+      req.body = { ...updates };
       eventStore.getEvent.mockReturnValue(existingEvent);
       const error = new Error('Service failure');
       updateCalendarEvent.mockRejectedValue(error);
@@ -255,7 +251,6 @@ describe('Calendar Controller', () => {
   });
 
   describe('deleteEvent', () => {
-    const userId = 'user123';
     const eventId = 'event123';
     const existingEvent = {
       date: '2023-12-25',
@@ -266,7 +261,6 @@ describe('Calendar Controller', () => {
     it('should delete a calendar event successfully', async () => {
       // Arrange
       req.params = { eventId };
-      req.body = { userId };
       eventStore.getEvent.mockReturnValue(existingEvent);
       deleteCalendarEvent.mockResolvedValue({ success: true });
 
@@ -274,9 +268,9 @@ describe('Calendar Controller', () => {
       await deleteEvent(req, res, next);
 
       // Assert
-      expect(eventStore.getEvent).toHaveBeenCalledWith(userId, eventId);
+      expect(eventStore.getEvent).toHaveBeenCalledWith(eventId);
       expect(deleteCalendarEvent).toHaveBeenCalledWith(eventId);
-      expect(eventStore.removeEvent).toHaveBeenCalledWith(userId, eventId);
+      expect(eventStore.removeEvent).toHaveBeenCalledWith(eventId);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ success: true });
       expect(logger.info).toHaveBeenCalled();
@@ -285,14 +279,13 @@ describe('Calendar Controller', () => {
     it('should return 404 when event does not exist', async () => {
       // Arrange
       req.params = { eventId };
-      req.body = { userId };
       eventStore.getEvent.mockReturnValue(null);
 
       // Act
       await deleteEvent(req, res, next);
 
       // Assert
-      expect(eventStore.getEvent).toHaveBeenCalledWith(userId, eventId);
+      expect(eventStore.getEvent).toHaveBeenCalledWith(eventId);
       expect(deleteCalendarEvent).not.toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(expect.objectContaining({
         statusCode: 404,
@@ -303,8 +296,7 @@ describe('Calendar Controller', () => {
 
     it('should return 400 when required fields are missing', async () => {
       // Arrange
-      req.params = { eventId };
-      req.body = {}; // Missing userId
+      req.params = {}; // Missing eventId
 
       // Act
       await deleteEvent(req, res, next);
@@ -318,7 +310,6 @@ describe('Calendar Controller', () => {
     it('should handle service exceptions properly', async () => {
       // Arrange
       req.params = { eventId };
-      req.body = { userId };
       eventStore.getEvent.mockReturnValue(existingEvent);
       const error = new Error('Service failure');
       deleteCalendarEvent.mockRejectedValue(error);
@@ -333,53 +324,37 @@ describe('Calendar Controller', () => {
     });
   });
 
-  describe('getUserEvents', () => {
-    const userId = 'user123';
-    const userEvents = [
+  describe('getAllEvents', () => {
+    const events = [
       { id: 'event1', date: '2023-12-25' },
       { id: 'event2', date: '2023-12-26' }
     ];
 
-    it('should return all events for a user', async () => {
+    it('should return all events', async () => {
       // Arrange
-      req.params = { userId };
-      eventStore.getAllUserEvents.mockReturnValue(userEvents);
+      eventStore.getAllEvents.mockReturnValue(events);
 
       // Act
-      await getUserEvents(req, res, next);
+      await getAllEvents(req, res, next);
 
       // Assert
-      expect(eventStore.getAllUserEvents).toHaveBeenCalledWith(userId);
+      expect(eventStore.getAllEvents).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(userEvents);
-    });
-
-    it('should return 400 when userId is missing', async () => {
-      // Arrange
-      req.params = {}; // Missing userId
-
-      // Act
-      await getUserEvents(req, res, next);
-
-      // Assert
-      expect(eventStore.getAllUserEvents).not.toHaveBeenCalled();
-      expect(next).toHaveBeenCalledWith(expect.any(ApiError));
-      expect(logger.error).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(events);
     });
 
     it('should handle service exceptions properly', async () => {
       // Arrange
-      req.params = { userId };
       const error = new Error('Service failure');
-      eventStore.getAllUserEvents.mockImplementation(() => {
+      eventStore.getAllEvents.mockImplementation(() => {
         throw error;
       });
 
       // Act
-      await getUserEvents(req, res, next);
+      await getAllEvents(req, res, next);
 
       // Assert
-      expect(eventStore.getAllUserEvents).toHaveBeenCalled();
+      expect(eventStore.getAllEvents).toHaveBeenCalled();
       expect(next).toHaveBeenCalledWith(error);
       expect(logger.error).toHaveBeenCalled();
     });

@@ -67,7 +67,7 @@ export async function getEphemeralKey(req, res, next) {
     
     // Fetch the ephemeral key
     const response = await fetch(endpoint, {
-      headers: { "x-api-key": config.apiKeys[0] }
+      headers: { "x-api-key": config.apiKeys }
     });
     
     // Handle non-success response

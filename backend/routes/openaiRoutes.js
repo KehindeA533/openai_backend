@@ -9,22 +9,17 @@ import apiKeyMiddleware from '../middleware/apiKey.js';
 const router = express.Router();
 
 /**
- * Apply API key middleware to all OpenAI routes
- */
-router.use(apiKeyMiddleware);
-
-/**
- * @api {get} /session Create a new OpenAI session
+ * @api {get} /session Create a session with OpenAI
  * @apiName CreateSession
  * @apiGroup OpenAI
  * 
  * @apiHeader {String} x-api-key API key for authentication
  * 
- * @apiSuccess {Object} session OpenAI session object with session ID and token
+ * @apiSuccess {Object} session Session data from OpenAI
  * 
  * @apiError {Object} error Error message
  */
-router.get('/session', createSession);
+router.get('/session', apiKeyMiddleware, createSession);
 
 /**
  * @api {get} /getEKey Get an ephemeral key

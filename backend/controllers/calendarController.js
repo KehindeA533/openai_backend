@@ -27,7 +27,6 @@ export async function createEvent(req, res, next) {
   try {
     // Extract required parameters from request body
     const { 
-      userId, 
       date, 
       time, 
       partySize, 
@@ -40,7 +39,7 @@ export async function createEvent(req, res, next) {
     // Validate required fields
     validateEventFields(
       req.body, 
-      ['userId', 'date', 'time', 'partySize', 'email', 'restaurantName', 'restaurantAddress', 'name']
+      ['date', 'time', 'partySize', 'email', 'restaurantName', 'restaurantAddress', 'name']
     );
 
     // Create the calendar event
@@ -50,11 +49,11 @@ export async function createEvent(req, res, next) {
     
     if (createdEvent && createdEvent.id) {
       // Store the event ID for later use
-      eventStore.saveEvent(userId, createdEvent.id, { 
+      eventStore.saveEvent(createdEvent.id, { 
         date, time, partySize, email, restaurantName, restaurantAddress, name 
       });
       
-      logger.info('Calendar event created successfully', { userId, eventId: createdEvent.id });
+      logger.info('Calendar event created successfully', { eventId: createdEvent.id });
       return res.status(201).json(createdEvent);
     } else {
       throw new ApiError('Failed to create event', 500);
@@ -71,16 +70,16 @@ export async function createEvent(req, res, next) {
 export async function updateEvent(req, res, next) {
   try {
     const { eventId } = req.params;
-    const { userId, ...updates } = req.body;
+    const { ...updates } = req.body;
 
     // Validate required fields
     validateEventFields(
-      { userId, eventId }, 
-      ['userId', 'eventId']
+      { eventId }, 
+      ['eventId']
     );
 
     // Get existing event data
-    const eventData = eventStore.getEvent(userId, eventId);
+    const eventData = eventStore.getEvent(eventId);
     if (!eventData) {
       throw new ApiError('Event not found', 404);
     }
@@ -98,12 +97,12 @@ export async function updateEvent(req, res, next) {
     );
     
     // Update the stored event data
-    eventStore.saveEvent(userId, eventId, {
+    eventStore.saveEvent(eventId, {
       ...eventData,
       ...updates
     });
     
-    logger.info('Calendar event updated successfully', { userId, eventId });
+    logger.info('Calendar event updated successfully', { eventId });
     return res.status(200).json(updatedEvent);
   } catch (error) {
     logger.error('Calendar event update failed', { error: error.message });
@@ -117,16 +116,15 @@ export async function updateEvent(req, res, next) {
 export async function deleteEvent(req, res, next) {
   try {
     const { eventId } = req.params;
-    const { userId } = req.body;
 
     // Validate required fields
     validateEventFields(
-      { userId, eventId }, 
-      ['userId', 'eventId']
+      { eventId }, 
+      ['eventId']
     );
 
     // Get existing event data
-    const eventData = eventStore.getEvent(userId, eventId);
+    const eventData = eventStore.getEvent(eventId);
     if (!eventData) {
       throw new ApiError('Event not found', 404);
     }
@@ -135,9 +133,9 @@ export async function deleteEvent(req, res, next) {
     const result = await deleteCalendarEvent(eventId);
     
     // Remove the event from our store
-    eventStore.removeEvent(userId, eventId);
+    eventStore.removeEvent(eventId);
     
-    logger.info('Calendar event deleted successfully', { userId, eventId });
+    logger.info('Calendar event deleted successfully', { eventId });
     return res.status(200).json(result);
   } catch (error) {
     logger.error('Calendar event deletion failed', { error: error.message });
@@ -146,21 +144,14 @@ export async function deleteEvent(req, res, next) {
 }
 
 /**
- * Get all events for a user
+ * Get all calendar events
  */
-export async function getUserEvents(req, res, next) {
+export async function getAllEvents(req, res, next) {
   try {
-    const { userId } = req.params;
-    
-    // Validate required fields
-    validateEventFields({ userId }, ['userId']);
-    
-    // Get all events for the user
-    const events = eventStore.getAllUserEvents(userId);
-    
+    const events = eventStore.getAllEvents();
     return res.status(200).json(events);
   } catch (error) {
-    logger.error('Failed to get user events', { error: error.message });
+    logger.error('Failed to get events', { error: error.message });
     next(error);
   }
 }

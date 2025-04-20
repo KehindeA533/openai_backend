@@ -54,20 +54,17 @@ describe('Calendar Routes', () => {
       });
     });
     
-    calendarController.getUserEvents.mockImplementation((req, res) => {
-      res.json({ 
-        events: [
-          { id: 'event-1', summary: 'Event 1' },
-          { id: 'event-2', summary: 'Event 2' }
-        ] 
-      });
+    calendarController.getAllEvents.mockImplementation((req, res) => {
+      res.json([ 
+        { id: 'event-1', summary: 'Event 1' },
+        { id: 'event-2', summary: 'Event 2' }
+      ]);
     });
   });
 
   describe('POST /calendar/events', () => {
     it('should create a new calendar event with valid data', async () => {
       const eventData = {
-        userId: 'user-123',
         date: '2023-05-15',
         time: '18:30',
         partySize: 4,
@@ -93,7 +90,6 @@ describe('Calendar Routes', () => {
     it('should update an existing calendar event', async () => {
       const eventId = 'event-123';
       const updateData = {
-        userId: 'user-123',
         restaurantName: 'Updated Restaurant',
         partySize: 6
       };
@@ -114,36 +110,27 @@ describe('Calendar Routes', () => {
   describe('DELETE /calendar/events/:eventId', () => {
     it('should delete a calendar event', async () => {
       const eventId = 'event-123';
-      const deleteData = {
-        userId: 'user-123'
-      };
 
       const response = await request(app)
-        .delete(`/calendar/events/${eventId}`)
-        .send(deleteData);
+        .delete(`/calendar/events/${eventId}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
       expect(response.body).toHaveProperty('eventId', eventId);
       expect(calendarController.deleteEvent).toHaveBeenCalledTimes(1);
       expect(calendarController.deleteEvent.mock.calls[0][0].params.eventId).toBe(eventId);
-      // Skip checking the body since it might not be properly passed in DELETE requests
     });
   });
 
-  describe('GET /calendar/users/:userId/events', () => {
-    it('should get all events for a user', async () => {
-      const userId = 'user-123';
-
+  describe('GET /calendar/events', () => {
+    it('should get all events', async () => {
       const response = await request(app)
-        .get(`/calendar/users/${userId}/events`);
+        .get('/calendar/events');
 
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('events');
-      expect(Array.isArray(response.body.events)).toBe(true);
-      expect(response.body.events).toHaveLength(2);
-      expect(calendarController.getUserEvents).toHaveBeenCalledTimes(1);
-      expect(calendarController.getUserEvents.mock.calls[0][0].params.userId).toBe(userId);
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body).toHaveLength(2);
+      expect(calendarController.getAllEvents).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -159,7 +146,6 @@ describe('Calendar Routes', () => {
       const response = await request(app)
         .post('/calendar/events')
         .send({
-          userId: 'user-123',
           date: '2023-05-15',
           time: '18:30'
           // Missing required fields
@@ -179,7 +165,7 @@ describe('Calendar Routes', () => {
 
       const response = await request(app)
         .put('/calendar/events/nonexistent-id')
-        .send({ userId: 'user-123' });
+        .send({});
 
       expect(response.status).toBe(404);
       expect(response.body).toHaveProperty('error', 'Event not found');
@@ -194,23 +180,22 @@ describe('Calendar Routes', () => {
       });
 
       const response = await request(app)
-        .delete('/calendar/events/event-123')
-        .send({ userId: 'different-user' });
+        .delete('/calendar/events/event-123');
 
       expect(response.status).toBe(403);
       expect(response.body).toHaveProperty('error', 'Unauthorized to delete this event');
     });
 
-    it('should handle errors in getUserEvents endpoint', async () => {
+    it('should handle errors in getAllEvents endpoint', async () => {
       // Mock controller to simulate an error
-      calendarController.getUserEvents.mockImplementation((req, res, next) => {
+      calendarController.getAllEvents.mockImplementation((req, res, next) => {
         const error = new Error('Failed to fetch events');
         error.statusCode = 500;
         next(error);
       });
 
       const response = await request(app)
-        .get('/calendar/users/user-123/events');
+        .get('/calendar/events');
 
       expect(response.status).toBe(500);
       expect(response.body).toHaveProperty('error', 'Failed to fetch events');
@@ -221,8 +206,8 @@ describe('Calendar Routes', () => {
     it('should validate required fields for createEvent', async () => {
       // Mock controller to validate input
       calendarController.createEvent.mockImplementation((req, res, next) => {
-        const { userId, date, time, email, restaurantName } = req.body;
-        if (!userId || !date || !time || !email || !restaurantName) {
+        const { date, time, email, restaurantName } = req.body;
+        if (!date || !time || !email || !restaurantName) {
           const error = new Error('Missing required fields');
           error.statusCode = 400;
           return next(error);
@@ -233,7 +218,6 @@ describe('Calendar Routes', () => {
       const response = await request(app)
         .post('/calendar/events')
         .send({
-          userId: 'user-123',
           // Missing required fields
         });
 

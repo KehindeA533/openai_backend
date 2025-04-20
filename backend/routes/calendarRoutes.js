@@ -7,7 +7,7 @@ import {
   createEvent, 
   updateEvent, 
   deleteEvent,
-  getUserEvents
+  getAllEvents
 } from '../controllers/calendarController.js';
 
 const router = express.Router();
@@ -17,7 +17,6 @@ const router = express.Router();
  * @apiName CreateCalendarEvent
  * @apiGroup Calendar
  * 
- * @apiBody {String} userId User identifier
  * @apiBody {String} date Date in YYYY-MM-DD format
  * @apiBody {String} time Time in HH:MM format (24-hour)
  * @apiBody {Number} partySize Number of people in the reservation
@@ -39,7 +38,6 @@ router.post('/events', createEvent);
  * 
  * @apiParam {String} eventId The ID of the event to update
  * 
- * @apiBody {String} userId User identifier
  * @apiBody {String} [date] Date in YYYY-MM-DD format
  * @apiBody {String} [time] Time in HH:MM format (24-hour)
  * @apiBody {Number} [partySize] Number of people in the reservation
@@ -61,8 +59,6 @@ router.put('/events/:eventId', updateEvent);
  * 
  * @apiParam {String} eventId The ID of the event to delete
  * 
- * @apiBody {String} userId User identifier
- * 
  * @apiSuccess {Object} result Success message with eventId
  * 
  * @apiError {Object} error Error message
@@ -70,16 +66,14 @@ router.put('/events/:eventId', updateEvent);
 router.delete('/events/:eventId', deleteEvent);
 
 /**
- * @api {get} /calendar/users/:userId/events Get all events for a user
- * @apiName GetUserEvents
+ * @api {get} /calendar/events Get all calendar events
+ * @apiName GetAllEvents
  * @apiGroup Calendar
  * 
- * @apiParam {String} userId The ID of the user
- * 
- * @apiSuccess {Array} events List of calendar events for the user
+ * @apiSuccess {Array} events List of all calendar events
  * 
  * @apiError {Object} error Error message
  */
-router.get('/users/:userId/events', getUserEvents);
+router.get('/events', getAllEvents);
 
 export default router;
