@@ -109,9 +109,46 @@ function formatReadableTime(dateTime) {
  * Prepare a calendar event resource object
  */
 function prepareEventResource(date, time, partySize, email, restaurantName, restaurantAddress, name) {
-  // Create start and end times
-  const startDateTime = new Date(`${date}T${time}`);
-  const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000); // 1-hour reservation
+  // Create start and end times with explicit timezone handling
+  // Add timezone offset for Eastern Time (ET)
+  const dateTimeString = `${date}T${time}`;
+  const startDateTime = new Date(dateTimeString);
+  
+  // Ensure the date is interpreted in America/New_York timezone
+  const userTimezone = 'America/New_York';
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: userTimezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  
+  // Get the parts of the date in the specified timezone
+  const parts = formatter.formatToParts(startDateTime);
+  const tzDate = {};
+  parts.forEach(part => {
+    if (part.type !== 'literal') {
+      tzDate[part.type] = part.value;
+    }
+  });
+  
+  // Create a proper ISO string with the correct timezone offset
+  const adjustedDateTime = new Date(
+    Date.UTC(
+      parseInt(tzDate.year),
+      parseInt(tzDate.month) - 1, // Month is 0-based in JavaScript
+      parseInt(tzDate.day),
+      parseInt(tzDate.hour),
+      parseInt(tzDate.minute),
+      parseInt(tzDate.second)
+    )
+  );
+  
+  const endDateTime = new Date(adjustedDateTime.getTime() + 60 * 60 * 1000); // 1-hour reservation
   
   // Format readable time
   const readableTime = formatReadableTime(startDateTime);
@@ -121,12 +158,12 @@ function prepareEventResource(date, time, partySize, email, restaurantName, rest
     location: `${restaurantName}, ${restaurantAddress}`,
     description: `Reservation confirmed for ${name} on ${readableTime} for ${partySize} people. We look forward to serving you!`,
     start: {
-      dateTime: startDateTime.toISOString(),
-      timeZone: 'America/New_York',
+      dateTime: adjustedDateTime.toISOString(),
+      timeZone: userTimezone,
     },
     end: {
       dateTime: endDateTime.toISOString(),
-      timeZone: 'America/New_York',
+      timeZone: userTimezone,
     },
     attendees: [{ email }],
     reminders: {
