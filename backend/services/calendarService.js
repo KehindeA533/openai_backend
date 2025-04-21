@@ -8,10 +8,29 @@ import config from '../config/env.js';
 import logger from '../utils/logger.js';
 
 /**
- * Reads previously authorized credentials from the token file
+ * Gets Google API credentials from environment variable or file
+ */
+function getCredentials() {
+  // First try to get from environment variable
+  if (process.env.GOOGLE_CREDENTIALS) {
+    return JSON.parse(process.env.GOOGLE_CREDENTIALS);
+  } 
+  // Fall back to file system for local development
+  return JSON.parse(fs.readFileSync(config.paths.credentials));
+}
+
+/**
+ * Reads previously authorized credentials from the token file or environment
  */
 async function loadSavedCredentials() {
   try {
+    // First try environment variable
+    if (process.env.GOOGLE_TOKEN) {
+      const credentials = JSON.parse(process.env.GOOGLE_TOKEN);
+      return google.auth.fromJSON(credentials);
+    }
+    
+    // Fall back to file
     const content = fs.readFileSync(config.paths.token);
     const credentials = JSON.parse(content);
     return google.auth.fromJSON(credentials);
@@ -33,7 +52,7 @@ export async function authorize() {
   
   // If no credentials exist, set up new ones
   try {
-    const credentials = JSON.parse(fs.readFileSync(config.paths.credentials));
+    const credentials = getCredentials();
     const { client_id, client_secret } = credentials.web;
     
     // Use the first javascript_origin as the redirect URI base
@@ -50,6 +69,14 @@ export async function authorize() {
     
     // Read token from token.json if it exists
     try {
+      // Try environment variable first for token
+      if (process.env.GOOGLE_TOKEN) {
+        const token = JSON.parse(process.env.GOOGLE_TOKEN);
+        oAuth2Client.setCredentials(token);
+        return oAuth2Client;
+      }
+      
+      // Fall back to file
       const token = JSON.parse(fs.readFileSync(config.paths.token));
       oAuth2Client.setCredentials(token);
       return oAuth2Client;
