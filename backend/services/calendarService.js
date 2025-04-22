@@ -109,46 +109,22 @@ function formatReadableTime(dateTime) {
  * Prepare a calendar event resource object
  */
 function prepareEventResource(date, time, partySize, email, restaurantName, restaurantAddress, name) {
-  // Create start and end times with explicit timezone handling
-  // Add timezone offset for Eastern Time (ET)
-  const dateTimeString = `${date}T${time}`;
-  const startDateTime = new Date(dateTimeString);
+  const timeZone = 'America/New_York';
   
-  // Ensure the date is interpreted in America/New_York timezone
-  const userTimezone = 'America/New_York';
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: userTimezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
+  // Convert local date and time to UTC
+  // We're creating a date in the server's local timezone first
+  const localDateTime = new Date(`${date}T${time}`);
   
-  // Get the parts of the date in the specified timezone
-  const parts = formatter.formatToParts(startDateTime);
-  const tzDate = {};
-  parts.forEach(part => {
-    if (part.type !== 'literal') {
-      tzDate[part.type] = part.value;
-    }
-  });
+  // Get the timestamp as if it were in Eastern Time
+  const etOffsetHours = getEasternTimeOffset();
+  const utcOffsetHours = localDateTime.getTimezoneOffset() / 60;
   
-  // Create a proper ISO string with the correct timezone offset
-  const adjustedDateTime = new Date(
-    Date.UTC(
-      parseInt(tzDate.year),
-      parseInt(tzDate.month) - 1, // Month is 0-based in JavaScript
-      parseInt(tzDate.day),
-      parseInt(tzDate.hour),
-      parseInt(tzDate.minute),
-      parseInt(tzDate.second)
-    )
-  );
+  // Calculate the difference between server time and Eastern Time
+  const offsetDiff = utcOffsetHours + etOffsetHours;
   
-  const endDateTime = new Date(adjustedDateTime.getTime() + 60 * 60 * 1000); // 1-hour reservation
+  // Create the correct start time by adjusting for the timezone difference
+  const startDateTime = new Date(localDateTime.getTime() + (offsetDiff * 60 * 60 * 1000));
+  const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000); // 1-hour reservation
   
   // Format readable time
   const readableTime = formatReadableTime(startDateTime);
@@ -158,12 +134,12 @@ function prepareEventResource(date, time, partySize, email, restaurantName, rest
     location: `${restaurantName}, ${restaurantAddress}`,
     description: `Reservation confirmed for ${name} on ${readableTime} for ${partySize} people. We look forward to serving you!`,
     start: {
-      dateTime: adjustedDateTime.toISOString(),
-      timeZone: userTimezone,
+      dateTime: startDateTime.toISOString(),
+      timeZone: timeZone,
     },
     end: {
       dateTime: endDateTime.toISOString(),
-      timeZone: userTimezone,
+      timeZone: timeZone,
     },
     attendees: [{ email }],
     reminders: {
@@ -174,6 +150,28 @@ function prepareEventResource(date, time, partySize, email, restaurantName, rest
       ],
     },
   };
+}
+
+/**
+ * Get the current offset for Eastern Time, accounting for DST
+ */
+function getEasternTimeOffset() {
+  // Check if Eastern Time is currently observing Daylight Saving Time
+  const now = new Date();
+  
+  // Create dates for when DST starts and ends in the Eastern Time zone
+  const currentYear = now.getFullYear();
+  
+  // DST begins on the second Sunday in March
+  const dstStart = new Date(currentYear, 2, 1);
+  dstStart.setDate(14 - (dstStart.getDay() || 7) + 1);
+  
+  // DST ends on the first Sunday in November
+  const dstEnd = new Date(currentYear, 10, 1);
+  dstEnd.setDate(7 - (dstEnd.getDay() || 7) + 1);
+  
+  // Return -4 during DST, -5 otherwise
+  return (now >= dstStart && now < dstEnd) ? -4 : -5;
 }
 
 /**
