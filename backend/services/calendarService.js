@@ -94,7 +94,10 @@ export async function authorize() {
  * Create a human-readable time string
  */
 function formatReadableTime(dateTime) {
-  return dateTime.toLocaleString('en-US', {
+  // Ensure we're working with a Date object
+  const date = dateTime instanceof Date ? dateTime : new Date(dateTime);
+  
+  return date.toLocaleString('en-US', {
     timeZone: 'America/New_York',
     weekday: 'long',
     month: 'long',
@@ -109,9 +112,10 @@ function formatReadableTime(dateTime) {
  * Prepare a calendar event resource object
  */
 function prepareEventResource(date, time, partySize, email, restaurantName, restaurantAddress, name) {
-  // Create start and end times
-  const startDateTime = new Date(`${date}T${time}`);
-  console.log('startDateTime', startDateTime);
+  // Create start and end times with explicit timezone
+  const dateTimeString = `${date}T${time}:00`;
+  // Force interpretation in Eastern Time by appending the timezone offset
+  const startDateTime = new Date(dateTimeString + '-04:00'); // Eastern Time (approximation, adjust for DST if needed)
   const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000); // 1-hour reservation
   
   // Format readable time
