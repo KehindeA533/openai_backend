@@ -109,37 +109,25 @@ function formatReadableTime(dateTime) {
  * Prepare a calendar event resource object
  */
 function prepareEventResource(date, time, partySize, email, restaurantName, restaurantAddress, name) {
-  const timeZone = 'America/New_York';
-  
-  // Convert local date and time to UTC
-  // We're creating a date in the server's local timezone first
-  const localDateTime = new Date(`${date}T${time}`);
-  
-  // Get the timestamp as if it were in Eastern Time
-  const etOffsetHours = getEasternTimeOffset();
-  const utcOffsetHours = localDateTime.getTimezoneOffset() / 60;
-  
-  // Calculate the difference between server time and Eastern Time
-  const offsetDiff = utcOffsetHours + etOffsetHours;
-  
-  // Create the correct start time by adjusting for the timezone difference
-  const startDateTime = new Date(localDateTime.getTime() + (offsetDiff * 60 * 60 * 1000));
+  // Create start and end times
+  const startDateTime = new Date(`${date}T${time}`);
+  console.log('startDateTime', startDateTime);
   const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000); // 1-hour reservation
   
   // Format readable time
   const readableTime = formatReadableTime(startDateTime);
-  
+  console.log('readableTime', readableTime);
   return {
     summary: `Reservation for ${name}`,
     location: `${restaurantName}, ${restaurantAddress}`,
     description: `Reservation confirmed for ${name} on ${readableTime} for ${partySize} people. We look forward to serving you!`,
     start: {
       dateTime: startDateTime.toISOString(),
-      timeZone: timeZone,
+      timeZone: 'America/New_York',
     },
     end: {
       dateTime: endDateTime.toISOString(),
-      timeZone: timeZone,
+      timeZone: 'America/New_York',
     },
     attendees: [{ email }],
     reminders: {
@@ -150,28 +138,6 @@ function prepareEventResource(date, time, partySize, email, restaurantName, rest
       ],
     },
   };
-}
-
-/**
- * Get the current offset for Eastern Time, accounting for DST
- */
-function getEasternTimeOffset() {
-  // Check if Eastern Time is currently observing Daylight Saving Time
-  const now = new Date();
-  
-  // Create dates for when DST starts and ends in the Eastern Time zone
-  const currentYear = now.getFullYear();
-  
-  // DST begins on the second Sunday in March
-  const dstStart = new Date(currentYear, 2, 1);
-  dstStart.setDate(14 - (dstStart.getDay() || 7) + 1);
-  
-  // DST ends on the first Sunday in November
-  const dstEnd = new Date(currentYear, 10, 1);
-  dstEnd.setDate(7 - (dstEnd.getDay() || 7) + 1);
-  
-  // Return -4 during DST, -5 otherwise
-  return (now >= dstStart && now < dstEnd) ? -4 : -5;
 }
 
 /**
