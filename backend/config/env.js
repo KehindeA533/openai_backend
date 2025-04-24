@@ -45,7 +45,7 @@ const config = {
   corsOptions: {
     allowedOrigins: 
       process.env.NODE_ENV === 'production'
-        ? ['https://ai-voice-agent-v0-1.vercel.app']
+        ? ['https://ai-voice-agent-v0-1.vercel.app', 'http://localhost:3001']
         : [`http://localhost:${process.env.F_LOCAL_HOST_PORT || 3001}`]
   },
   
