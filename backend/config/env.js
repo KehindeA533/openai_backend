@@ -41,6 +41,14 @@ const config = {
   openAIKey: process.env.OPENAI_API_KEY,
   weatherApiKey: process.env.WEATHER_API_KEY,
   
+  // AWS Configuration
+  aws: {
+    region: process.env.AWS_REGION || 'us-east-1',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    bucketName: process.env.AWS_S3_BUCKET_NAME || 'transcript-storage'
+  },
+  
   // CORS configuration
   corsOptions: {
     allowedOrigins: 
