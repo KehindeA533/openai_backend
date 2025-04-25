@@ -23,6 +23,12 @@ const app = express();
 // STEP 1: Set up Middleware
 // ============================================================================
 
+// Increase JSON payload limit to 50MB
+app.use(express.json({ limit: '50mb' }));
+
+// If you're also using URL-encoded data
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
 // Apply CORS middleware globally with configured origins
 app.use(
   cors({
