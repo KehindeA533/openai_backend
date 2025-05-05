@@ -10,6 +10,7 @@ import logger from './utils/logger.js';
 import openaiRoutes from './routes/openaiRoutes.js';
 import calendarRoutes from './routes/calendarRoutes.js';
 import weatherRoutes from './routes/weatherRoutes.js';
+import audioRoutes from './routes/audioRoutes.js';
 
 // Import middleware
 import apiKeyMiddleware from './middleware/apiKey.js';
@@ -77,6 +78,8 @@ app.use('/calendar', calendarRoutes);
 // Weather routes
 app.use('/weather', weatherRoutes);
 
+// Audio routes
+app.use('/audio', audioRoutes);
 
 // Handle 404 errors
 app.use((req, res) => {
