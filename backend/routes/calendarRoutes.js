@@ -7,7 +7,8 @@ import {
   createEvent, 
   updateEvent, 
   deleteEvent,
-  getAllEvents
+  getAllEvents,
+  getMonthlyEvents
 } from '../controllers/calendarController.js';
 
 const router = express.Router();
@@ -75,5 +76,19 @@ router.delete('/events/:name', deleteEvent);
  * @apiError {Object} error Error message
  */
 router.get('/events', getAllEvents);
+
+/**
+ * @api {get} /calendar/events/monthly Get events for previous, current and next month
+ * @apiName GetMonthlyEvents
+ * @apiGroup Calendar
+ * 
+ * @apiSuccess {Object} events Object containing events for previous, current and next month
+ * @apiSuccess {Array} events.previousMonth Events from the previous month
+ * @apiSuccess {Array} events.currentMonth Events from the current month
+ * @apiSuccess {Array} events.nextMonth Events from the next month
+ * 
+ * @apiError {Object} error Error message
+ */
+router.get('/events/monthly', getMonthlyEvents);
 
 export default router;

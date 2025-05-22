@@ -168,3 +168,17 @@ export async function getAllEvents(req, res, next) {
     next(error);
   }
 }
+
+/**
+ * Get events for previous, current and next month
+ */
+export async function getMonthlyEvents(req, res, next) {
+  try {
+    const monthlyEvents = eventStore.getMonthlyEvents();
+    logger.info('Retrieved monthly events successfully');
+    return res.status(200).json(monthlyEvents);
+  } catch (error) {
+    logger.error('Failed to get monthly events', { error: error.message });
+    next(error);
+  }
+}

@@ -137,6 +137,49 @@ class EventStore {
     // Remove from main map
     return this.events.delete(eventId);
   }
+
+  /**
+   * Get events within a date range
+   * @param {Date} startDate - Start date of the range
+   * @param {Date} endDate - End date of the range
+   * @returns {Array} Array of event objects within the date range
+   */
+  getEventsByDateRange(startDate, endDate) {
+    if (!startDate || !endDate) {
+      return [];
+    }
+
+    return Array.from(this.events.values()).filter(event => {
+      const eventDate = new Date(event.date);
+      return eventDate >= startDate && eventDate <= endDate;
+    });
+  }
+
+  /**
+   * Get events for previous, current and next month
+   * @returns {Object} Object containing events for previous, current and next month
+   */
+  getMonthlyEvents() {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    // Calculate start and end dates for each month
+    const previousMonth = new Date(currentYear, currentMonth - 1, 1);
+    const previousMonthEnd = new Date(currentYear, currentMonth, 0);
+
+    const currentMonthStart = new Date(currentYear, currentMonth, 1);
+    const currentMonthEnd = new Date(currentYear, currentMonth + 1, 0);
+
+    const nextMonth = new Date(currentYear, currentMonth + 1, 1);
+    const nextMonthEnd = new Date(currentYear, currentMonth + 2, 0);
+
+    return {
+      previousMonth: this.getEventsByDateRange(previousMonth, previousMonthEnd),
+      currentMonth: this.getEventsByDateRange(currentMonthStart, currentMonthEnd),
+      nextMonth: this.getEventsByDateRange(nextMonth, nextMonthEnd)
+    };
+  }
 }
 
 // Create and export a singleton instance
